@@ -102,7 +102,7 @@ const CreateNovelModal: React.FC<CreateNovelModalProps> = ({ isOpen, onClose, on
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-hidden">
-            <div className="bg-secondary rounded-lg shadow-xl max-w-3xl w-full mx-auto transform transition-all max-h-[95vh] flex flex-col" >
+            <div className="bg-secondary rounded-lg shadow-xl max-w-3xl w-full mx-auto transform transition-all max-h-[90vh] flex flex-col" >
                 {/* Header - Static */}
                 <div className="p-5 border-b border-slate-200 shrink-0">
                     <h2 className="text-2xl font-bold font-serif text-text-primary mb-1">Create a New Novel</h2>

@@ -73,13 +73,12 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
       .join('line')
       .attr('stroke-width', 2);
 
-    // Link labels with background rect for better readability instead of just stroke
+    // Link labels with background rect for better readability
     const linkLabelGroup = svg.append('g')
       .selectAll('g')
       .data(links)
       .join('g');
 
-    // Optional: Add a small white rect behind text for better readability
     linkLabelGroup.append('rect')
         .attr('fill', 'rgba(255, 255, 255, 0.85)')
         .attr('rx', 4);
@@ -134,19 +133,23 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
       linkLabelGroup.each(function() {
           const g = d3.select(this);
           const text = g.select('text');
-          const bbox = (text.node() as SVGTextElement).getBBox();
-          g.select('rect')
-              .attr('x', bbox.x - 4)
-              .attr('y', bbox.y - 2)
-              .attr('width', bbox.width + 8)
-              .attr('height', bbox.height + 4);
+          try {
+              const bbox = (text.node() as SVGTextElement).getBBox();
+              g.select('rect')
+                  .attr('x', bbox.x - 4)
+                  .attr('y', bbox.y - 2)
+                  .attr('width', bbox.width + 8)
+                  .attr('height', bbox.height + 4);
+          } catch (e) {
+              // Ignore bbox errors during initial render
+          }
       });
       
       node.attr('transform', d => `translate(${d.x},${d.y})`);
     });
 
     const handleResize = () => {
-        if (containerRef.current) {
+        if (containerRef.current && svgRef.current) {
             const { width: newWidth, height: newHeight } = containerRef.current.getBoundingClientRect();
             d3.select(svgRef.current)
                 .attr('width', newWidth)
