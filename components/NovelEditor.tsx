@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Novel, PlotPoint, View } from '../types';
 import * as geminiService from '../services/geminiService';
 import CharacterCard from './CharacterCard';
@@ -11,6 +11,7 @@ import ChapterEditor from './ChapterEditor';
 import SettingsPage from './SettingsPage';
 import TimelinePage from './TimelinePage';
 import WorldbuildingPage from './WorldbuildingPage';
+import { ArrowsPointingOutIcon } from './icons';
 
 interface NovelEditorProps {
     initialNovel: Novel;
@@ -22,6 +23,8 @@ const NovelEditor: React.FC<NovelEditorProps> = ({ initialNovel, onUpdateNovel, 
   const [novel, setNovel] = useState<Novel>(initialNovel);
   const [error, setError] = useState<string | null>(null);
   const [editingChapter, setEditingChapter] = useState<PlotPoint | null>(null);
+  
+  const relationshipContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setNovel(initialNovel);
@@ -150,6 +153,18 @@ const NovelEditor: React.FC<NovelEditorProps> = ({ initialNovel, onUpdateNovel, 
     }
   };
 
+  const toggleFullScreen = () => {
+      if (!document.fullscreenElement) {
+          relationshipContainerRef.current?.requestFullscreen().catch(err => {
+              console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+          });
+      } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+      }
+  };
+
   const renderContent = () => {
     if (!novel) return null;
   
@@ -198,9 +213,23 @@ const NovelEditor: React.FC<NovelEditorProps> = ({ initialNovel, onUpdateNovel, 
         );
       case 'relationships':
         return (
-          <div>
-            <h2 className="text-3xl font-bold font-serif text-text-primary mb-6">Character Relationships</h2>
-            <div className="bg-primary rounded-lg p-4 h-[calc(100vh-16rem)] shadow-inner">
+          <div className="h-full flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-3xl font-bold font-serif text-text-primary">Character Relationships</h2>
+                <button
+                    onClick={toggleFullScreen}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50 transition-colors text-text-secondary font-medium"
+                    title="Toggle Full Screen"
+                >
+                    <ArrowsPointingOutIcon className="w-5 h-5" />
+                    <span>Full Screen</span>
+                </button>
+            </div>
+            <div 
+                ref={relationshipContainerRef} 
+                className="bg-primary rounded-lg p-4 h-[calc(100vh-16rem)] shadow-inner w-full flex-grow overflow-hidden"
+                style={{ backgroundColor: 'white' }} 
+            >
                 <RelationshipGraph characters={novel.characters} relationships={novel.relationships} />
             </div>
           </div>
