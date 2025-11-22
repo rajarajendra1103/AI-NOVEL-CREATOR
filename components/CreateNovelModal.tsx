@@ -103,7 +103,7 @@ const CreateNovelModal: React.FC<CreateNovelModalProps> = ({ isOpen, onClose, on
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div className="bg-secondary rounded-lg shadow-xl p-8 max-w-3xl w-full mx-4 transform transition-all" >
+            <div className="bg-secondary rounded-lg shadow-xl p-6 md:p-8 max-w-3xl w-full mx-4 transform transition-all max-h-[90vh] overflow-y-auto" >
                 <h2 className="text-3xl font-bold font-serif text-text-primary mb-4">Create a New Novel</h2>
                 <p className="text-text-secondary mb-6">
                     Start with a single idea. Our AI will handle the world-building, character creation, and plot development.
@@ -117,7 +117,7 @@ const CreateNovelModal: React.FC<CreateNovelModalProps> = ({ isOpen, onClose, on
                     disabled={isLoading}
                 />
                 <textarea
-                    className={`${commonInputClass} h-40`}
+                    className={`${commonInputClass} h-32`}
                     placeholder="e.g., A detective in a cyberpunk city hunts a rogue AI who believes it's the reincarnation of a famous poet..."
                     value={premise}
                     onChange={(e) => setPremise(e.target.value)}
