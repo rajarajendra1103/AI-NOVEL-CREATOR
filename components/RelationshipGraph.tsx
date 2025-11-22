@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { Character, Relationship } from '../types';
@@ -8,7 +9,6 @@ interface RelationshipGraphProps {
 }
 
 // FIX: Explicitly define properties added by d3 simulation to resolve TypeScript errors.
-// These properties might not be correctly inferred from the extended d3.SimulationNodeDatum type.
 interface Node extends d3.SimulationNodeDatum {
   id: string;
   name: string;
@@ -19,7 +19,6 @@ interface Node extends d3.SimulationNodeDatum {
 }
 
 // FIX: Remove source and target properties to correctly inherit them from d3.SimulationLinkDatum<Node>.
-// This allows d3 to replace string IDs with Node objects during simulation.
 interface Link extends d3.SimulationLinkDatum<Node> {
   relationship: string;
 }
@@ -46,10 +45,25 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
 
     svg.selectAll('*').remove(); // Clear previous render
 
+    // Enhanced simulation with collision detection and stronger charges
     const simulation = d3.forceSimulation<Node>(nodes)
-      .force('link', d3.forceLink<Node, Link>(links).id(d => d.id).distance(150))
-      .force('charge', d3.forceManyBody().strength(-400))
-      .force('center', d3.forceCenter(0, 0));
+      .force('link', d3.forceLink<Node, Link>(links).id(d => d.id).distance(200))
+      .force('charge', d3.forceManyBody().strength(-800)) // Stronger repulsion to spread nodes
+      .force('center', d3.forceCenter(0, 0))
+      .force('collide', d3.forceCollide(60)); // Prevent node overlap (radius + buffer)
+
+    // Define arrowhead marker
+    svg.append('defs').append('marker')
+      .attr('id', 'arrowhead')
+      .attr('viewBox', '0 -5 10 10')
+      .attr('refX', 38) // Adjust based on node radius + stroke
+      .attr('refY', 0)
+      .attr('markerWidth', 6)
+      .attr('markerHeight', 6)
+      .attr('orient', 'auto')
+      .append('path')
+      .attr('d', 'M0,-5L10,0L0,5')
+      .attr('fill', '#94A3B8');
 
     const link = svg.append('g')
       .attr('stroke', '#94A3B8')
@@ -57,35 +71,48 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
       .selectAll('line')
       .data(links)
       .join('line')
-      .attr('stroke-width', 2);
+      .attr('stroke-width', 2)
+      //.attr('marker-end', 'url(#arrowhead)'); // Optional: Add arrows if relationships are directional
 
+    // Link labels with "halo" for readability
     const linkLabel = svg.append('g')
       .selectAll('text')
       .data(links)
       .join('text')
       .text(d => d.relationship)
-      .attr('fill', '#475569')
-      .attr('font-size', '10px')
-      .attr('text-anchor', 'middle');
+      .attr('fill', '#1E293B')
+      .attr('font-size', '11px')
+      .attr('font-weight', '500')
+      .attr('text-anchor', 'middle')
+      .style('paint-order', 'stroke') // Ensure stroke is drawn behind text
+      .style('stroke', '#F8FAFC') // Match background color
+      .style('stroke-width', '4px')
+      .style('stroke-linecap', 'round')
+      .style('stroke-linejoin', 'round');
 
     const node = svg.append('g')
       .selectAll('g')
       .data(nodes)
       .join('g')
+      .style('cursor', 'grab')
       .call(drag(simulation) as any);
 
     node.append('circle')
       .attr('r', 30)
       .attr('fill', '#7C3AED')
       .attr('stroke', '#FFFFFF')
-      .attr('stroke-width', 2);
+      .attr('stroke-width', 3)
+      .attr('class', 'shadow-md'); // Simulated shadow via class if needed, but SVG doesn't use TW classes effectively for shadows
     
     node.append('text')
       .text(d => d.name)
-      .attr('y', 45)
+      .attr('y', 5)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#1E293B')
-      .style('font-weight', 'bold');
+      .attr('dominant-baseline', 'middle')
+      .attr('fill', '#FFFFFF')
+      .style('font-weight', 'bold')
+      .style('font-size', '10px')
+      .style('pointer-events', 'none'); // Let clicks pass through to the circle/group
 
     simulation.on('tick', () => {
       link
@@ -108,6 +135,8 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
                 .attr('width', newWidth)
                 .attr('height', newHeight)
                 .attr('viewBox', [-newWidth / 2, -newHeight / 2, newWidth, newHeight]);
+            
+            // Re-center and energize simulation
             simulation.force('center', d3.forceCenter(0, 0));
             simulation.alpha(0.3).restart();
         }
@@ -127,6 +156,8 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
       if (!event.active) simulation.alphaTarget(0.3).restart();
       d.fx = d.x;
       d.fy = d.y;
+      // Update cursor style
+      d3.select(event.sourceEvent.target).style("cursor", "grabbing");
     }
     
     function dragged(event: d3.D3DragEvent<Element, Node, Node>, d: Node) {
@@ -138,6 +169,7 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
       if (!event.active) simulation.alphaTarget(0);
       d.fx = null;
       d.fy = null;
+      d3.select(event.sourceEvent.target).style("cursor", "grab");
     }
     
     return d3.drag<any, Node>()
@@ -147,7 +179,7 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
   }
 
   return (
-    <div ref={containerRef} className="w-full h-full">
+    <div ref={containerRef} className="w-full h-full bg-slate-50 rounded-lg overflow-hidden">
       <svg ref={svgRef}></svg>
     </div>
   );
