@@ -8,7 +8,6 @@ interface RelationshipGraphProps {
   relationships: Relationship[];
 }
 
-// FIX: Explicitly define properties added by d3 simulation to resolve TypeScript errors.
 interface Node extends d3.SimulationNodeDatum {
   id: string;
   name: string;
@@ -18,7 +17,6 @@ interface Node extends d3.SimulationNodeDatum {
   fy?: number | null;
 }
 
-// FIX: Remove source and target properties to correctly inherit them from d3.SimulationLinkDatum<Node>.
 interface Link extends d3.SimulationLinkDatum<Node> {
   relationship: string;
 }
@@ -45,18 +43,20 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
 
     svg.selectAll('*').remove(); // Clear previous render
 
-    // Enhanced simulation with collision detection and stronger charges
+    // Significantly increased forces for better spread
     const simulation = d3.forceSimulation<Node>(nodes)
-      .force('link', d3.forceLink<Node, Link>(links).id(d => d.id).distance(200))
-      .force('charge', d3.forceManyBody().strength(-800)) // Stronger repulsion to spread nodes
+      .force('link', d3.forceLink<Node, Link>(links).id(d => d.id).distance(250)) 
+      .force('charge', d3.forceManyBody().strength(-1500)) 
       .force('center', d3.forceCenter(0, 0))
-      .force('collide', d3.forceCollide(60)); // Prevent node overlap (radius + buffer)
+      .force('collide', d3.forceCollide(80))
+      .force('x', d3.forceX().strength(0.05)) // Gentle centering
+      .force('y', d3.forceY().strength(0.05));
 
-    // Define arrowhead marker
+    // Arrowhead marker
     svg.append('defs').append('marker')
       .attr('id', 'arrowhead')
       .attr('viewBox', '0 -5 10 10')
-      .attr('refX', 38) // Adjust based on node radius + stroke
+      .attr('refX', 38)
       .attr('refY', 0)
       .attr('markerWidth', 6)
       .attr('markerHeight', 6)
@@ -71,24 +71,26 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
       .selectAll('line')
       .data(links)
       .join('line')
-      .attr('stroke-width', 2)
-      //.attr('marker-end', 'url(#arrowhead)'); // Optional: Add arrows if relationships are directional
+      .attr('stroke-width', 2);
 
-    // Link labels with "halo" for readability
-    const linkLabel = svg.append('g')
-      .selectAll('text')
+    // Link labels with background rect for better readability instead of just stroke
+    const linkLabelGroup = svg.append('g')
+      .selectAll('g')
       .data(links)
-      .join('text')
+      .join('g');
+
+    // Optional: Add a small white rect behind text for better readability
+    linkLabelGroup.append('rect')
+        .attr('fill', 'rgba(255, 255, 255, 0.85)')
+        .attr('rx', 4);
+
+    const linkText = linkLabelGroup.append('text')
       .text(d => d.relationship)
-      .attr('fill', '#1E293B')
+      .attr('fill', '#475569')
       .attr('font-size', '11px')
-      .attr('font-weight', '500')
+      .attr('font-weight', '600')
       .attr('text-anchor', 'middle')
-      .style('paint-order', 'stroke') // Ensure stroke is drawn behind text
-      .style('stroke', '#F8FAFC') // Match background color
-      .style('stroke-width', '4px')
-      .style('stroke-linecap', 'round')
-      .style('stroke-linejoin', 'round');
+      .attr('dy', '0.35em');
 
     const node = svg.append('g')
       .selectAll('g')
@@ -102,17 +104,17 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
       .attr('fill', '#7C3AED')
       .attr('stroke', '#FFFFFF')
       .attr('stroke-width', 3)
-      .attr('class', 'shadow-md'); // Simulated shadow via class if needed, but SVG doesn't use TW classes effectively for shadows
+      .attr('class', 'drop-shadow-md'); 
     
     node.append('text')
       .text(d => d.name)
-      .attr('y', 5)
+      .attr('y', 0)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .attr('fill', '#FFFFFF')
       .style('font-weight', 'bold')
       .style('font-size', '10px')
-      .style('pointer-events', 'none'); // Let clicks pass through to the circle/group
+      .style('pointer-events', 'none');
 
     simulation.on('tick', () => {
       link
@@ -121,9 +123,24 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
         .attr('x2', d => (d.target as Node).x!)
         .attr('y2', d => (d.target as Node).y!);
 
-      linkLabel
-        .attr('x', d => ((d.source as Node).x! + (d.target as Node).x!) / 2)
-        .attr('y', d => ((d.source as Node).y! + (d.target as Node).y!) / 2);
+      // Update label positions
+      linkLabelGroup.attr('transform', d => {
+          const x = ((d.source as Node).x! + (d.target as Node).x!) / 2;
+          const y = ((d.source as Node).y! + (d.target as Node).y!) / 2;
+          return `translate(${x}, ${y})`;
+      });
+
+      // Update bounding box for background rects based on text size
+      linkLabelGroup.each(function() {
+          const g = d3.select(this);
+          const text = g.select('text');
+          const bbox = (text.node() as SVGTextElement).getBBox();
+          g.select('rect')
+              .attr('x', bbox.x - 4)
+              .attr('y', bbox.y - 2)
+              .attr('width', bbox.width + 8)
+              .attr('height', bbox.height + 4);
+      });
       
       node.attr('transform', d => `translate(${d.x},${d.y})`);
     });
@@ -136,7 +153,6 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
                 .attr('height', newHeight)
                 .attr('viewBox', [-newWidth / 2, -newHeight / 2, newWidth, newHeight]);
             
-            // Re-center and energize simulation
             simulation.force('center', d3.forceCenter(0, 0));
             simulation.alpha(0.3).restart();
         }
@@ -156,7 +172,6 @@ const RelationshipGraph: React.FC<RelationshipGraphProps> = ({ characters, relat
       if (!event.active) simulation.alphaTarget(0.3).restart();
       d.fx = d.x;
       d.fy = d.y;
-      // Update cursor style
       d3.select(event.sourceEvent.target).style("cursor", "grabbing");
     }
     
