@@ -145,7 +145,7 @@ ${language ? `Language: Write in ${language}` : ''}
 Generate the output as a valid JSON object that strictly adheres to the provided schema.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-3-pro-preview',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -176,7 +176,7 @@ Characters: ${novel.characters.map(c => c.name).join(', ') || 'Not specified yet
 Generate the output as a valid JSON object that strictly adheres to the provided schema for just the "outline" array.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-3-pro-preview',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -233,7 +233,7 @@ ${previousChapter.summary}
 6.  The response should ONLY contain the prose for the chapter.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
             temperature: mapCreativityToTemperature(novel.creativity),
@@ -272,7 +272,7 @@ export const generateWorld = async (
 Generate the output as a valid JSON object that strictly adheres to the provided schema. Do not include entities for Story Integration or Meta categories.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-3-pro-preview',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -335,7 +335,7 @@ export const generateChatbotResponse = async (novel: Novel, history: ChatMessage
     };
     
     const chat = ai.chats.create({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-3-pro-preview',
         history: history.map(m => ({
             role: m.role,
             parts: [{ text: m.content }]
