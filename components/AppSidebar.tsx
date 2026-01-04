@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Novel, View } from '../types';
 import { HomeIcon, BookOpenIcon, UsersIcon, LinkIcon, SettingsIcon, ClockIcon, GlobeAltIcon } from './icons';
@@ -37,7 +36,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
     onSetView,
     onGoToDashboard,
     isMobileMenuOpen,
-    onCloseMobileMenu,
+    onCloseMobileMenu
 }) => {
     const handleNavItemClick = (view?: View) => {
         if (view) {
@@ -115,10 +114,10 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
             </nav>
             <div className="flex-shrink-0 border-t border-white/10 pt-4">
                 <div className="flex items-center">
-                    <img className="h-10 w-10 rounded-full" src="https://i.pravatar.cc/150?u=author" alt="Author" />
+                    <img className="h-10 w-10 rounded-full" src={`https://api.dicebear.com/7.x/initials/svg?seed=Author`} alt="Author" />
                     <div className="ml-3">
-                        <p className="text-sm font-medium text-white">Author Name</p>
-                        <p className="text-xs text-slate-400">View profile</p>
+                        <p className="text-sm font-medium text-white">Author Profile</p>
+                        <p className="text-xs text-slate-400">Settings</p>
                     </div>
                 </div>
             </div>
@@ -126,9 +125,19 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
     );
 
     return (
-        <div className="hidden md:block">
-            {sidebarContent}
-        </div>
+        <>
+            <div className="hidden md:block">
+                {sidebarContent}
+            </div>
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-50 flex md:hidden">
+                    <div className="fixed inset-0 bg-black/50" onClick={onCloseMobileMenu}></div>
+                    <div className="relative flex-1 flex flex-col max-w-xs w-full bg-slate-800">
+                        {sidebarContent}
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 

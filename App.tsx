@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Novel, View } from './types';
 import * as geminiService from './services/geminiService';
@@ -10,7 +9,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import OutlineReviewer from './components/OutlineReviewer';
 import AppSidebar from './components/AppSidebar';
 import ChatbotPanel from './components/ChatbotPanel';
-import { MenuIcon, BotIcon } from './components/icons';
+import { MenuIcon, BotIcon, SparklesIcon, SettingsIcon } from './components/icons';
 
 const App: React.FC = () => {
     const [novels, setNovels] = useState<Novel[]>([]);
@@ -67,7 +66,6 @@ const App: React.FC = () => {
         customWorldbuildingEntities: [],
     });
 
-
     const generateAndStageNovel = async (premise: string, title: string, genre: string[], style: string, tone: string[], language: string, pov: Novel['pov']) => {
         setIsGenerating(true);
         try {
@@ -85,8 +83,9 @@ const App: React.FC = () => {
                 creativity: 'Balanced' as Novel['creativity'],
             };
             setStagedNovel(newNovel);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
+            alert(err.message || "An error occurred during generation.");
             setCreationArgs(null);
         } finally {
             setIsGenerating(false);
@@ -164,12 +163,11 @@ const App: React.FC = () => {
            <p className="text-md mt-2 text-slate-400">This can take up to a minute.</p>
         </div>
     );
-    
+
     if (isLoading) return renderFullPageLoader("Loading your projects...");
     if (isGenerating) return renderFullPageLoader("Building your novel's universe...");
 
     if (stagedNovel) {
-        // We need to provide a default structure for the reviewer, even though it will be empty
         const reviewNovel = {
             ...stagedNovel,
             ...getNewNovelBase()
@@ -229,7 +227,7 @@ const App: React.FC = () => {
                     <MenuIcon className="w-6 h-6 text-text-primary" />
                 </button>
                     <h1 className="text-lg font-bold text-accent">AI Novel Creator</h1>
-                    <div className="w-6 h-6" />
+                    <SettingsIcon className="w-6 h-6 text-slate-400" />
             </header>
             <div className="flex flex-1 overflow-hidden">
                 <AppSidebar
