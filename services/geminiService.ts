@@ -7,7 +7,7 @@ import { Novel, PlotPoint, ChatMessage, Continent, Region, Landmark, Resource, C
  */
 const getClient = () => {
     if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set.");
+        throw new Error("API_KEY environment variable not set. Please ensure it is configured in your environment settings.");
     }
     return new GoogleGenAI({ apiKey: process.env.API_KEY });
 };
@@ -106,7 +106,7 @@ export const generateNovelStructure = async (
     Generate the output as a valid JSON object that strictly adheres to the provided schema.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -126,7 +126,7 @@ export const generateOutline = async (novel: Novel): Promise<PlotPoint[]> => {
     Generate the output as a valid JSON array of plot points.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -176,7 +176,7 @@ export const generateWorld = async (
     Generate approximately ${settings.numKingdoms} kingdoms and ${settings.numCities} cities.`;
 
     const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
@@ -194,7 +194,7 @@ export const generateChatbotResponse = async (novel: Novel, history: ChatMessage
     const systemInstruction = `You are an AI assistant for a novelist. Mode: ${mode}. Novel: ${novel.title}. Premise: ${novel.premise}.`;
     
     const chat = ai.chats.create({
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-3-flash-preview',
         history: history.map(m => ({
             role: m.role,
             parts: [{ text: m.content }]

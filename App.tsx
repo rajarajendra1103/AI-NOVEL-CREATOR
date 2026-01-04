@@ -9,7 +9,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import OutlineReviewer from './components/OutlineReviewer';
 import AppSidebar from './components/AppSidebar';
 import ChatbotPanel from './components/ChatbotPanel';
-import { MenuIcon, BotIcon, SparklesIcon, SettingsIcon } from './components/icons';
+import { MenuIcon, BotIcon, SparklesIcon, SettingsIcon, XIcon } from './components/icons';
 
 const App: React.FC = () => {
     const [novels, setNovels] = useState<Novel[]>([]);
@@ -17,6 +17,7 @@ const App: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [stagedNovel, setStagedNovel] = useState<Omit<Novel, 'timelineEvents' | 'continents' | 'regions' | 'landmarks' | 'resources' | 'climateZones' | 'dynasties' | 'factions' | 'governmentSystems' | 'alliances' | 'religions' | 'guilds' | 'orders' | 'languages' | 'traditions' | 'myths' | 'artForms' | 'cuisines' | 'dressStyles' | 'spells' | 'artifacts' | 'creatures' | 'manaSources' | 'curses' | 'technologies' | 'markets' | 'occupations' | 'currencies' | 'buildings' | 'festivals' | 'calendarSystems' | 'wars' | 'battles' | 'historicEras' | 'prophecies' | 'heroes' | 'locationEvents' | 'culturalRelations' | 'magicInteractions' | 'characterOrigins' | 'aiWorldSeeds' | 'loreIndices' | 'userTags' | 'customWorldbuildingEntities' > | null>(null);
     const [creationArgs, setCreationArgs] = useState<{ premise: string; title: string; genre: string[]; style: string; tone: string[]; language: string; pov: Novel['pov'] } | null>(null);
 
@@ -68,6 +69,7 @@ const App: React.FC = () => {
 
     const generateAndStageNovel = async (premise: string, title: string, genre: string[], style: string, tone: string[], language: string, pov: Novel['pov']) => {
         setIsGenerating(true);
+        setError(null);
         try {
             const generatedNovelStructure = await geminiService.generateNovelStructure(premise, genre, style, tone, language, 'Balanced', pov);
             const newNovel = {
@@ -85,7 +87,14 @@ const App: React.FC = () => {
             setStagedNovel(newNovel);
         } catch (err: any) {
             console.error(err);
-            alert(err.message || "An error occurred during generation.");
+            const errorMsg = err.message || "An error occurred during generation.";
+            if (errorMsg.includes('429')) {
+              setError("API Rate limit exceeded. Please wait a moment before trying again.");
+            } else if (errorMsg.includes('limit: 0')) {
+              setError("The current API key does not have access to this model version. Retrying with a more compatible model.");
+            } else {
+              setError(errorMsg);
+            }
             setCreationArgs(null);
         } finally {
             setIsGenerating(false);
@@ -159,8 +168,8 @@ const App: React.FC = () => {
     const renderFullPageLoader = (text: string) => (
         <div className="fixed inset-0 bg-primary bg-opacity-95 flex flex-col items-center justify-center z-[100]">
            <LoadingSpinner />
-           <p className="text-xl mt-4 text-text-secondary">{text}</p>
-           <p className="text-md mt-2 text-slate-400">This can take up to a minute.</p>
+           <p className="text-xl mt-4 text-text-primary">{text}</p>
+           <p className="text-md mt-2 text-text-secondary">This can take up to a minute.</p>
         </div>
     );
 
@@ -188,7 +197,7 @@ const App: React.FC = () => {
         if (activeNovelId) {
             setIsChatbotOpen(true);
         } else {
-            alert("Please select a novel to start a chat with the AI assistant.");
+            setError("Please select a novel to start a chat with the AI assistant.");
         }
     };
 
@@ -222,6 +231,15 @@ const App: React.FC = () => {
 
     return (
         <div className="h-screen bg-secondary flex flex-col">
+            {error && (
+              <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[1000] bg-red-600 text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3 max-w-lg">
+                <span className="flex-1 text-sm font-medium">{error}</span>
+                <button onClick={() => setError(null)} className="p-1 hover:bg-white/20 rounded">
+                  <XIcon className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             <header className="flex items-center justify-between p-4 border-b border-slate-200 bg-primary shadow-sm md:hidden">
                 <button onClick={() => setIsMobileMenuOpen(true)}>
                     <MenuIcon className="w-6 h-6 text-text-primary" />
